@@ -8,14 +8,3 @@ The goal of this project is to build a competitive model that can accurately pre
 
 # Embedding
 
-# XGBoost
-
-# MLP Neural Network
-
-# Predictions & Scoring
-
-# Sources
-
-https://www.kaggle.com/competitions/cafa-6-protein-function-prediction/data
-
-https://peerj.com/articles/12019/
