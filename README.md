@@ -3,7 +3,9 @@ The goal of this project is to build a competitive model that can accurately pre
 
 # Data Preprocessing
 The data sourc efor this project is from the "Cafa 6 Protein Function Prediction" Kaggle Competition. There are three input files: train_sequences.fasta, train_terms.tsv, train_taxonomy.tsv. The raw data consists of 82,404 protein sequences, 537,027 annotation rows, and 26,125 unique GO terms across three ontologies (BP, MF, CC). Because there are so many sequences we removed ones where they contained non standard amino acids. Also I filtered GO terms to only those appearing in 50 or more proteins, reducing from 26,125 to 1,585 terms. Dropped ~6,000 proteins that lost all annotations after filtering, leaving 76,458 proteins. 
+
 # Embedding
+The embedding models used were ESM-2 and ProtT5. ESM-2 is the 650M parameter version from Meta, trained on the UniRef50 protein database. ProtT5 is from Rostlab and uses the T5 transformer architecture. Both models convert each protein sequence into a numeric vector by mean pooling the hidden states across the sequence length, with sequences truncated to a maximum of 1,024 tokens. Embeddings were generated on the High Point University HPC cluster using 128-core CPU nodes. Because the HPC compute nodes have no internet access, the pretrained models were downloaded separately and a Singularity container was built with Python 3.12, PyTorch (CPU), and Hugging Face Transformers. ESM-2 produces a 1,280-dimensional vector per protein and ProtT5 produces a 1,024-dimensional vector. A third dataset was created by concatenating both embeddings into a 2,304-dimensional representation
 
 # XGBoost
 
