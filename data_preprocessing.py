@@ -37,7 +37,6 @@ model = AutoModel.from_pretrained(model_name).to("cuda").eval()
 
 print("Model loaded!")
 
-# Prepare sequences as a list
 protein_ids = list(sequences.keys())
 protein_seqs = list(sequences.values())
 
@@ -51,17 +50,13 @@ with torch.no_grad():
     for i in tqdm(range(0, len(protein_seqs), batch_size)):
         batch_seqs = protein_seqs[i:i+batch_size]
 
-        # Truncate long sequences
         batch_seqs = [s[:max_length] for s in batch_seqs]
 
-        # Tokenize
         inputs = tokenizer(batch_seqs, return_tensors="pt", padding=True,
                           truncation=True, max_length=max_length+2).to("cuda")
 
-        # Get embeddings
         outputs = model(**inputs)
 
-        # Mean pool across sequence length (ignore padding)
         attention_mask = inputs["attention_mask"].unsqueeze(-1)
         hidden = outputs.last_hidden_state
         masked = hidden * attention_mask
@@ -69,7 +64,6 @@ with torch.no_grad():
 
         all_embeddings.append(embeddings.cpu().numpy())
 
-# Combine all batches
 embeddings_matrix = np.concatenate(all_embeddings, axis=0)
 print(f"Done! Shape: {embeddings_matrix.shape}")
 
