@@ -9,6 +9,8 @@ The data sourc efor this project is from the "Cafa 6 Protein Function Prediction
 
 # MLP Neural Network
 
+# Ensamble
+
 # Predictions & Scoring
 
 # Sources
