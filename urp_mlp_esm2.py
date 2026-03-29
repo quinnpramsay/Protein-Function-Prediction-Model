@@ -1,8 +1,6 @@
-# CELL 1 — Mount Drive
 from google.colab import drive
 drive.mount('/content/drive')
 
-# CELL 2 — Imports and Paths
 import os, time
 import numpy as np
 import pandas as pd
@@ -14,12 +12,11 @@ from sklearn.metrics import average_precision_score
 
 BASE_DIR = "/content/drive/MyDrive/Senior Year/Undergraduate Research Program"
 
-SEED = 42
+SEED = 67
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
 
-# CELL 3 — Load Pre-Filtered Data
 embeddings = np.load(os.path.join(BASE_DIR, "filtered_esm2.npy"))
 protein_ids = np.load(os.path.join(BASE_DIR, "filtered_protein_ids.npy"), allow_pickle=True)
 terms_df = pd.read_csv(os.path.join(BASE_DIR, "filtered_terms.tsv"), sep="\t")
@@ -30,7 +27,6 @@ print(f"Terms: {len(terms_df)} rows, {terms_df['term'].nunique()} unique GO term
 
 assert embeddings.shape[0] == len(protein_ids), "Row mismatch between embeddings and protein IDs"
 
-# CELL 4 — Build Label Matrix
 frequent_terms = sorted(terms_df['term'].unique().tolist())
 term_to_col = {t: i for i, t in enumerate(frequent_terms)}
 num_terms = len(frequent_terms)
@@ -53,12 +49,10 @@ for _, row in terms_df.iterrows():
 print(f"X: {X.shape}, Y: {Y.shape}, label density: {Y.mean():.5f}")
 del embeddings
 
-# CELL 5 — Train/Val Split (80/20)
 X_train, X_val, Y_train, Y_val = train_test_split(X, Y, test_size=0.2, random_state=SEED)
 print(f"Train: {X_train.shape[0]:,}, Val: {X_val.shape[0]:,}")
 del X, Y
 
-# CELL 6 — Model and Loss
 class ProteinMLP(nn.Module):
     def __init__(self, input_dim, num_labels):
         super().__init__()
@@ -92,7 +86,6 @@ class FocalLoss(nn.Module):
         alpha_weight = targets * self.alpha + (1 - targets) * (1 - self.alpha)
         return (alpha_weight * focal_weight * bce).mean()
 
-# CELL 7 — Training Setup
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {device}")
 
@@ -113,7 +106,6 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, fa
 
 print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
-# CELL 8 — Train
 best_val_loss = float('inf')
 best_state = None
 patience_counter = 0
@@ -166,7 +158,6 @@ model.to(device)
 model.eval()
 print(f"Best val loss: {best_val_loss:.6f}")
 
-# CELL 9 — Predictions
 all_preds = []
 with torch.no_grad():
     for xb, _ in val_loader:
@@ -175,7 +166,6 @@ with torch.no_grad():
 val_probs = np.concatenate(all_preds)
 print(f"Predictions: {val_probs.shape}")
 
-# CELL 10 — Fmax Evaluation
 def compute_fmax(y_true, y_pred, indices=None):
     if indices is not None:
         y_true, y_pred = y_true[:, indices], y_pred[:, indices]
@@ -214,7 +204,6 @@ print(f"{'Cellular Component':<25} {fmax_cc:>7.4f} {t_cc:>7.2f} {p_cc:>7.4f} {r_
 print("-" * 55)
 print(f"{'CAFA Score':<25} {cafa_score:>7.4f}")
 
-# CELL 11 — Save Model
 SAVE_PATH = os.path.join(BASE_DIR, "mlp_esm2_best.pt")
 torch.save({
     'model_state_dict': best_state,
