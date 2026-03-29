@@ -66,7 +66,7 @@ for i in tqdm(range(n_terms), desc="XGBoost"):
         eval_metric="logloss",
         verbosity=0,
         device="cuda",
-        random_state=42,
+        random_state=67,
         early_stopping_rounds=5,
     )
     model.fit(X_train, y_tr, eval_set=[(X_val, y_vl)], verbose=False)
