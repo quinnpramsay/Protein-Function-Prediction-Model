@@ -1,61 +1,26 @@
-"""
-generate_esm2_embeddings.py
-===========================
-Generates ESM-2 (facebook/esm2_t33_650M_UR50D) embeddings for protein sequences.
-Each protein sequence is converted into a 1,280-dimensional vector using mean pooling.
-
-Outputs:
-    - train_esm2_embeddings.npy  (82,404 × 1,280)
-    - test_esm2_embeddings.npy   (224,309 × 1,280)
-    - train_protein_ids.npy
-    - test_protein_ids.npy
-
-Environment:
-    - Singularity container (cafa.sif) with Python 3.12, PyTorch, transformers
-    - Run on HPC CPU nodes via Slurm (no GPU required)
-    - Models pre-downloaded to local cache (compute nodes have no internet)
-
-Usage:
-    sbatch --partition=cs --nodelist=cnode1 --cpus-per-task=64 --mem=256G \\
-        --time=4320 --output=esm2_log.txt \\
-        --wrap="singularity run ~/cafa.sif ~/generate_esm2_embeddings.py"
-"""
-
 import os
 import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 from tqdm import tqdm
 
-# ============================================================
-# CONFIGURATION
-# ============================================================
 DATA_DIR = os.path.expanduser("~/data/cafa-6-protein-function-prediction")
 OUTPUT_DIR = os.path.expanduser("~/embeddings")
 MODEL_PATH = "/home/students/qramsay/models/models--facebook--esm2_t33_650M_UR50D/snapshots/08e4846e537177426273712802403f7ba8261b6c"
 BATCH_SIZE = 16
-MAX_LENGTH = 1024      # ESM-2 max input length
-CHUNK_SIZE = 10000     # Save progress every 10,000 proteins
+MAX_LENGTH = 1024      
+CHUNK_SIZE = 10000    
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# ============================================================
-# DEVICE
-# ============================================================
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 
-# ============================================================
-# LOAD MODEL
-# ============================================================
 print("Loading ESM-2 model...")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 model = AutoModel.from_pretrained(MODEL_PATH).to(device).eval()
 print("Model loaded!")
 
-# ============================================================
-# FASTA PARSER
-# ============================================================
 def parse_fasta(fasta_path):
     """
     Parse a FASTA file into a dictionary of {entry_id: sequence}.
@@ -85,9 +50,6 @@ def parse_fasta(fasta_path):
 
     return sequences
 
-# ============================================================
-# EMBEDDING GENERATOR WITH CHUNKED SAVING
-# ============================================================
 def generate_and_save(sequences_dict, prefix):
     """
     Generate ESM-2 embeddings and save in chunks.
@@ -99,10 +61,8 @@ def generate_and_save(sequences_dict, prefix):
     protein_ids = list(sequences_dict.keys())
     protein_seqs = list(sequences_dict.values())
 
-    # Save protein IDs
     np.save(os.path.join(OUTPUT_DIR, f"{prefix}_protein_ids.npy"), np.array(protein_ids))
 
-    # Check which chunks are already done
     done_chunks = set()
     for f in os.listdir(OUTPUT_DIR):
         if f.startswith(f"{prefix}_esm2_chunk_") and f.endswith(".npy"):
@@ -139,8 +99,6 @@ def generate_and_save(sequences_dict, prefix):
 
                 outputs = model(**inputs)
                 hidden = outputs.last_hidden_state
-
-                # Mean pooling: average hidden states, ignoring padding
                 mask = inputs["attention_mask"].unsqueeze(-1)
                 embeddings = (hidden * mask).sum(dim=1) / mask.sum(dim=1)
 
@@ -150,7 +108,6 @@ def generate_and_save(sequences_dict, prefix):
             np.save(os.path.join(OUTPUT_DIR, f"{prefix}_esm2_chunk_{chunk_idx}.npy"), chunk_data)
             print(f"  Saved chunk {chunk_idx}: {chunk_data.shape}")
 
-    # Combine all chunks into one file
     print(f"Combining all {prefix} chunks...")
     chunks = sorted([f for f in os.listdir(OUTPUT_DIR)
                      if f.startswith(f"{prefix}_esm2_chunk_")])
@@ -158,13 +115,9 @@ def generate_and_save(sequences_dict, prefix):
     np.save(os.path.join(OUTPUT_DIR, f"{prefix}_esm2_embeddings.npy"), combined)
     print(f"  Final {prefix} ESM-2 embeddings: {combined.shape}")
 
-    # Clean up chunks
     for c in chunks:
         os.remove(os.path.join(OUTPUT_DIR, c))
 
-# ============================================================
-# RUN
-# ============================================================
 print("\nLoading train sequences...")
 train_seqs = parse_fasta(os.path.join(DATA_DIR, "Train", "train_sequences.fasta"))
 print(f"  Loaded {len(train_seqs)} train sequences")
