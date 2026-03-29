@@ -16,6 +16,8 @@ The MLP is a two-layer feedforward neural network built in PyTorch that predicts
 The MLP was trained in Google Colab with a T4 GPU. The data was split 80/20 for training and validation with random_state=67. Each run took under one minute to train. The model was run separately on all three embedding types, and the trained weights were saved as .pt files for later use in ensemble evaluation.
 
 # Ensamble
+The MLP is a two-layer feedforward neural network built in PyTorch that predicts all 1,585 GO terms in a single forward pass. The architecture takes the embedding vector as input and passes it through two hidden layers of 1,024 and 512 neurons, each followed by batch normalization, ReLU activation, and 30% dropout. The final layer outputs 1,585 probabilities using sigmoid activation. The output bias is initialized to -2.0 so the model starts by predicting near-zero for all terms, which reflects the extreme label sparsity in the dataset. Focal Loss is used instead of standard binary cross-entropy to handle class imbalance by downweighting easy predictions and focusing on harder examples. The optimizer is AdamW with a learning rate of 0.001 and weight decay of 0.0001, and the learning rate is halved automatically when validation loss stops improving. Training stops early if no improvement is seen for seven consecutive epochs.
+The MLP was trained in Google Colab with a T4 GPU. The data was split 80/20 for training and validation with random_state=42. Each run took under one minute to train. The model was run separately on all three embedding types, and the trained weights were saved as .pt files for later use in ensemble evaluation.
 
 # Predictions & Scoring
 
