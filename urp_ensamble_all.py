@@ -1,8 +1,6 @@
-# CELL 1 — Mount Drive
 from google.colab import drive
 drive.mount('/content/drive')
 
-# CELL 2 — Imports and Paths
 import os, numpy as np, pandas as pd, torch, torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
@@ -10,12 +8,11 @@ from sklearn.model_selection import train_test_split
 BASE_DIR = "/content/drive/MyDrive/Senior Year/Undergraduate Research Program"
 DATA_DIR = os.path.join(BASE_DIR, "cafa-6-protein-function-prediction", "Train")
 
-SEED = 42
+SEED = 67
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
 
-# CELL 3 — Load Labels and Build Y
 terms_df = pd.read_csv(os.path.join(DATA_DIR, "filtered_terms.tsv"), sep="\t")
 protein_ids = np.load(os.path.join(DATA_DIR, "filtered_protein_ids.npy"), allow_pickle=True)
 
@@ -44,7 +41,6 @@ _, _, _, Y_val = train_test_split(dummy_X, Y, test_size=0.2, random_state=SEED)
 del dummy_X, Y
 print(f"Val set: {Y_val.shape[0]} proteins")
 
-# CELL 4 — Regenerate MLP Val Predictions
 class ProteinMLP(nn.Module):
     def __init__(self, input_dim, num_labels):
         super().__init__()
@@ -85,13 +81,11 @@ mlp_prott5 = get_mlp_val_preds("filtered_prott5.npy", "mlp_prott5_best.pt")
 mlp_concat = get_mlp_val_preds("filtered_concat.npy", "mlp_concat.pt")
 print("Done.")
 
-# CELL 5 — Load and Reorder XGBoost Predictions
 xgb_esm2 = np.load(os.path.join(DATA_DIR, "filtered_esm2_xgb_preds.npy"))[:, xgb_reorder]
 xgb_prott5 = np.load(os.path.join(DATA_DIR, "filtered_prott5_xgb_preds.npy"))[:, xgb_reorder]
 xgb_concat = np.load(os.path.join(DATA_DIR, "filtered_concat_xgb_preds.npy"))[:, xgb_reorder]
 print("XGBoost predictions loaded and reordered.")
 
-# CELL 6 — Ensemble and Evaluate
 ens_esm2 = (mlp_esm2 + xgb_esm2) / 2
 ens_prott5 = (mlp_prott5 + xgb_prott5) / 2
 ens_concat = (mlp_concat + xgb_concat) / 2
