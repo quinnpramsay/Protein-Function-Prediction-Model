@@ -21,8 +21,6 @@ The ensemble method averages the predicted probabilities from the MLP and XGBoos
 # Scoring
 The primary evaluation metric is protein-centric Fmax, which is the official scoring method used in CAFA challenges. For a given threshold, each protein's predictions are converted to binary labels, and precision and recall are calculated individually for that protein. Precision and recall are then averaged across all proteins to produce a single precision-recall pair for that threshold. This is repeated across 50 thresholds from 0.01 to 0.99, and the F1 score is computed at each one. Fmax is the highest F1 score achieved across all thresholds. This process is done separately for Biological Process, Molecular Function, and Cellular Component, and the final CAFA score is the arithmetic mean of the three Fmax values. This metric was chosen because it matches the official CAFA evaluation protocol, allowing direct comparison with published results in the field.
 
-# Sources
+# Source
 
 https://www.kaggle.com/competitions/cafa-6-protein-function-prediction/data
-
-https://peerj.com/articles/12019/
