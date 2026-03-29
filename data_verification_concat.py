@@ -27,16 +27,13 @@ import pandas as pd
 terms = pd.read_csv(f"{DATA_DIR}/train_terms.tsv", sep="\t")
 print(f"Raw: {len(terms)} rows, {terms['term'].nunique()} GO terms")
 
-# Filter to GO terms with >= 50 proteins
 freq = terms['term'].value_counts()
 filtered = terms[terms['term'].isin(freq[freq >= 50].index)]
 print(f"Filtered: {len(filtered)} rows, {filtered['term'].nunique()} terms")
 
-# Get valid protein IDs
 valid = filtered['EntryID'].unique()
 print(f"Valid proteins: {len(valid)}")
 
-# Index into embeddings
 id_to_idx = {p: i for i, p in enumerate(ids)}
 keep_idx = np.array([id_to_idx[p] for p in valid if p in id_to_idx])
 keep_ids = np.array([p for p in valid if p in id_to_idx])
